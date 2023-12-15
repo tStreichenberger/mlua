@@ -1497,11 +1497,12 @@ impl Lua {
     ///
     /// [`IntoLua`]: crate::IntoLua
     /// [`IntoLuaMulti`]: crate::IntoLuaMulti
-    pub fn create_function<'lua, A, R, F>(&'lua self, func: F) -> Result<Function<'lua>>
+    pub fn create_function<'lua, A, R, F, E>(&'lua self, func: F) -> Result<Function<'lua>>
     where
         A: FromLuaMulti<'lua>,
         R: IntoLuaMulti<'lua>,
-        F: Fn(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
+        F: Fn(&'lua Lua, A) -> StdResult<R, E> + MaybeSend + 'static,
+        Error: From<E>,
     {
         self.create_callback(Box::new(move |lua, nargs| unsafe {
             let args = A::from_stack_args(nargs, 1, None, lua)?;
@@ -1515,17 +1516,20 @@ impl Lua {
     /// [`create_function`] for more information about the implementation.
     ///
     /// [`create_function`]: #method.create_function
-    pub fn create_function_mut<'lua, A, R, F>(&'lua self, func: F) -> Result<Function<'lua>>
+    pub fn create_function_mut<'lua, A, R, F, E>(&'lua self, func: F) -> Result<Function<'lua>>
     where
         A: FromLuaMulti<'lua>,
         R: IntoLuaMulti<'lua>,
-        F: FnMut(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
+        F: FnMut(&'lua Lua, A) -> StdResult<R, E> + MaybeSend + 'static,
+        Error: From<E>,
     {
         let func = RefCell::new(func);
-        self.create_function(move |lua, args| {
+        self.create_function::<'_, _, _, _, Error>(move |lua, args| {
             (*func
                 .try_borrow_mut()
-                .map_err(|_| Error::RecursiveMutCallback)?)(lua, args)
+                .map_err(|_| Error::RecursiveMutCallback)?)
+                (lua, args)
+                .map_err(Error::from)
         })
     }
 
@@ -1581,12 +1585,13 @@ impl Lua {
     /// [`AsyncThread`]: crate::AsyncThread
     #[cfg(feature = "async")]
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
-    pub fn create_async_function<'lua, A, R, F, FR>(&'lua self, func: F) -> Result<Function<'lua>>
+    pub fn create_async_function<'lua, A, R, F, FR, E>(&'lua self, func: F) -> Result<Function<'lua>>
     where
         A: FromLuaMulti<'lua>,
         R: IntoLuaMulti<'lua>,
         F: Fn(&'lua Lua, A) -> FR + MaybeSend + 'static,
-        FR: Future<Output = Result<R>> + 'lua,
+        FR: Future<Output = StdResult<R, E>> + 'lua,
+        Error: From<E>,
     {
         self.create_async_callback(Box::new(move |lua, args| unsafe {
             let args = match A::from_lua_args(args, 1, None, lua) {
@@ -3144,7 +3149,7 @@ impl Lua {
         #[cfg(any(feature = "lua51", feature = "luajit"))]
         let searchers: Table = package.get("loaders")?;
 
-        let loader = self.create_function(|_, ()| Ok("\n\tcan't load C modules in safe mode"))?;
+        let loader = self.create_function(|_, ()| Result::Ok("\n\tcan't load C modules in safe mode"))?;
 
         // The third and fourth searchers looks for a loader as a C library
         searchers.raw_set(3, loader.clone())?;

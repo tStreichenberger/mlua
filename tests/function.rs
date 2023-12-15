@@ -74,7 +74,7 @@ fn test_rust_function() -> Result<()> {
     .exec()?;
 
     let lua_function = globals.get::<_, Function>("lua_function")?;
-    let rust_function = lua.create_function(|_, ()| Ok("hello"))?;
+    let rust_function = lua.create_function(|_, ()| Result::Ok("hello"))?;
 
     globals.set("rust_function", rust_function)?;
     assert_eq!(lua_function.call::<_, String>(())?, "hello");
@@ -119,7 +119,7 @@ fn test_function_environment() -> Result<()> {
     let lua = Lua::new();
 
     // We must not get or set environment for C functions
-    let rust_func = lua.create_function(|_, ()| Ok("hello"))?;
+    let rust_func = lua.create_function(|_, ()| Result::Ok("hello"))?;
     assert_eq!(rust_func.environment(), None);
     assert_eq!(rust_func.set_environment(lua.globals()).ok(), Some(false));
 
@@ -191,7 +191,7 @@ fn test_function_info() -> Result<()> {
 
     let function1 = globals.get::<_, Function>("function1")?;
     let function2 = function1.call::<_, Function>(())?;
-    let function3 = lua.create_function(|_, ()| Ok(()))?;
+    let function3 = lua.create_function(|_, ()| Result::Ok(()))?;
 
     let function1_info = function1.info();
     #[cfg(feature = "luau")]
