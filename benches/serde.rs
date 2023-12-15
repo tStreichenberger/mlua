@@ -14,7 +14,7 @@ fn serialize_json(c: &mut Criterion) {
     lua.globals()
         .set(
             "encode",
-            LuaFunction::wrap(|_, t: LuaValue| Ok(serde_json::to_string(&t).unwrap())),
+            LuaFunction::wrap(|_, t: LuaValue| LuaResult::Ok(serde_json::to_string(&t).unwrap())),
         )
         .unwrap();
 

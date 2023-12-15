@@ -269,7 +269,7 @@ fn test_owned_function() -> Result<()> {
     let lua = Lua::new();
 
     let f = lua
-        .create_function(|_, ()| Ok("hello, world!"))?
+        .create_function(|_, ()| Result::Ok("hello, world!"))?
         .into_owned();
     drop(lua);
 
@@ -291,7 +291,7 @@ fn test_owned_function_drop() -> Result<()> {
         lua.set_app_data(rc.clone());
 
         let f1 = lua
-            .create_function(|_, ()| Ok("hello, world!"))?
+            .create_function(|_, ()| Result::Ok("hello, world!"))?
             .into_owned();
         let f2 =
             lua.create_function(move |_, ()| f1.to_ref().call::<_, std::string::String>(()))?;

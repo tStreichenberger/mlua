@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
         lua_resp.set("headers", headers)?;
         lua_resp.set("body", BodyReader(resp.into_body()))?;
 
-        Ok(lua_resp)
+        Result::Ok(lua_resp)
     })?;
 
     let f = lua

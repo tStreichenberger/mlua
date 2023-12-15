@@ -138,7 +138,7 @@ fn create_function(c: &mut Criterion) {
             || collect_gc_twice(&lua),
             |_| {
                 for i in 0..10 {
-                    lua.create_function(move |_, ()| Ok(i)).unwrap();
+                    lua.create_function(move |_, ()| LuaResult::Ok(i)).unwrap();
                 }
             },
             BatchSize::SmallInput,
@@ -170,7 +170,7 @@ fn call_lua_function(c: &mut Criterion) {
 fn call_sum_callback(c: &mut Criterion) {
     let lua = Lua::new();
     let callback = lua
-        .create_function(|_, (a, b, c): (i64, i64, i64)| Ok(a + b + c))
+        .create_function(|_, (a, b, c): (i64, i64, i64)| LuaResult::Ok(a + b + c))
         .unwrap();
     lua.globals().set("callback", callback).unwrap();
 
@@ -196,7 +196,7 @@ fn call_async_sum_callback(c: &mut Criterion) {
     let callback = lua
         .create_async_function(|_, (a, b, c): (i64, i64, i64)| async move {
             task::yield_now().await;
-            Ok(a + b + c)
+            LuaResult::Ok(a + b + c)
         })
         .unwrap();
     lua.globals().set("callback", callback).unwrap();
@@ -222,7 +222,7 @@ fn call_concat_callback(c: &mut Criterion) {
     let lua = Lua::new();
     let callback = lua
         .create_function(|_, (a, b): (LuaString, LuaString)| {
-            Ok(format!("{}{}", a.to_str()?, b.to_str()?))
+            LuaResult::Ok(format!("{}{}", a.to_str()?, b.to_str()?))
         })
         .unwrap();
     lua.globals().set("callback", callback).unwrap();
