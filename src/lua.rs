@@ -1473,7 +1473,7 @@ impl Lua {
     /// # let lua = Lua::new();
     /// let greet = lua.create_function(|_, name: String| {
     ///     println!("Hello, {}!", name);
-    ///     Ok(())
+    ///     Result::Ok(())
     /// });
     /// # let _ = greet;    // used
     /// # Ok(())
@@ -1488,7 +1488,7 @@ impl Lua {
     /// # let lua = Lua::new();
     /// let print_person = lua.create_function(|_, (name, age): (String, u8)| {
     ///     println!("{} is {} years old!", name, age);
-    ///     Ok(())
+    ///     Result::Ok(())
     /// });
     /// # let _ = print_person;    // used
     /// # Ok(())

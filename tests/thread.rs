@@ -153,7 +153,7 @@ fn test_thread_reset() -> Result<()> {
 fn test_coroutine_from_closure() -> Result<()> {
     let lua = Lua::new();
 
-    let thrd_main = lua.create_function(|_, ()| Ok(()))?;
+    let thrd_main = lua.create_function(|_, ()| Result::Ok(()))?;
     lua.globals().set("main", thrd_main)?;
 
     #[cfg(any(

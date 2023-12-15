@@ -206,9 +206,9 @@ fn test_value_conversions() -> Result<()> {
     );
     assert!(Value::Table(lua.create_table()?).is_table());
     assert!(Value::Table(lua.create_table()?).as_table().is_some());
-    assert!(Value::Function(lua.create_function(|_, ()| Ok(())).unwrap()).is_function());
+    assert!(Value::Function(lua.create_function(|_, ()| Result::Ok(())).unwrap()).is_function());
     assert!(
-        Value::Function(lua.create_function(|_, ()| Ok(())).unwrap())
+        Value::Function(lua.create_function(|_, ()| Result::Ok(())).unwrap())
             .as_function()
             .is_some()
     );

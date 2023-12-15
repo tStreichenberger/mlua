@@ -166,7 +166,7 @@ impl<'lua> Function<'lua> {
     ///
     /// let sleep = lua.create_async_function(move |_lua, n: u64| async move {
     ///     tokio::time::sleep(Duration::from_millis(n)).await;
-    ///     Ok(())
+    ///     Result::Ok(())
     /// })?;
     ///
     /// sleep.call_async(10).await?;

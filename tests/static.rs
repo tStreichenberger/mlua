@@ -14,7 +14,7 @@ fn test_static_lua() -> Result<()> {
         TABLE.with(|t| {
             table.raw_insert(1, "hello")?;
             *t.borrow_mut() = Some(table);
-            Ok(())
+            Result::Ok(())
         })
     })?;
 
@@ -45,7 +45,7 @@ fn test_static_lua_coroutine() -> Result<()> {
         TABLE.with(|t| {
             table.raw_insert(1, "hello")?;
             *t.borrow_mut() = Some(table);
-            Ok(())
+            Result::Ok(())
         })
     })?;
 
@@ -82,7 +82,7 @@ async fn test_static_async() -> Result<()> {
                     tokio::time::sleep(dur).await;
                 }
             });
-            Ok(())
+            Result::Ok(())
         })?;
     lua.globals().set("timer", timer)?;
 

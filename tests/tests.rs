@@ -504,10 +504,10 @@ fn test_result_conversions() -> Result<()> {
     let lua = Lua::new();
     let globals = lua.globals();
 
-    let ok = lua.create_function(|_, ()| Ok(Ok::<(), Error>(())))?;
-    let err = lua.create_function(|_, ()| Ok(Err::<(), _>("failure1".into_lua_err())))?;
-    let ok2 = lua.create_function(|_, ()| Ok(Ok::<_, Error>("!".to_owned())))?;
-    let err2 = lua.create_function(|_, ()| Ok(Err::<String, _>("failure2".into_lua_err())))?;
+    let ok = lua.create_function(|_, ()| Result::Ok(Ok::<(), Error>(())))?;
+    let err = lua.create_function(|_, ()| Result::Ok(Err::<(), _>("failure1".into_lua_err())))?;
+    let ok2 = lua.create_function(|_, ()| Result::Ok(Ok::<_, Error>("!".to_owned())))?;
+    let err2 = lua.create_function(|_, ()| Result::Ok(Err::<String, _>("failure2".into_lua_err())))?;
 
     globals.set("ok", ok)?;
     globals.set("ok2", ok2)?;
@@ -690,7 +690,7 @@ fn test_recursive_mut_callback_error() -> Result<()> {
     let lua = Lua::new();
 
     let mut v = Some(Box::new(123));
-    let f = lua.create_function_mut::<_, (), _>(move |lua, mutate: bool| {
+    let f = lua.create_function_mut::<_, (), _, Error>(move |lua, mutate: bool| {
         if mutate {
             v = None;
         } else {
@@ -740,7 +740,7 @@ fn test_named_registry_value() -> Result<()> {
     lua.set_named_registry_value::<i32>("test", 42)?;
     let f = lua.create_function(move |lua, ()| {
         assert_eq!(lua.named_registry_value::<i32>("test")?, 42);
-        Ok(())
+        Result::Ok(())
     })?;
 
     f.call::<_, ()>(())?;
@@ -766,7 +766,7 @@ fn test_registry_value() -> Result<()> {
         } else {
             panic!();
         }
-        Ok(())
+        Result::Ok(())
     })?;
 
     f.call::<_, ()>(())?;
@@ -930,7 +930,7 @@ fn test_application_data() -> Result<()> {
         let data2 = lua.app_data_ref::<Vec<&str>>().unwrap();
         assert_eq!(*data2, vec!["test2", "test3"]);
 
-        Ok(())
+        Result::Ok(())
     })?;
     f.call(())?;
 
@@ -956,7 +956,7 @@ fn test_recursion() -> Result<()> {
                 .get::<_, Function>("f")?
                 .call::<_, ()>(i + 1)?;
         }
-        Ok(())
+        Result::Ok(())
     })?;
 
     lua.globals().set("f", f.clone())?;
@@ -968,7 +968,7 @@ fn test_recursion() -> Result<()> {
 #[test]
 fn test_too_many_returns() -> Result<()> {
     let lua = Lua::new();
-    let f = lua.create_function(|_, ()| Ok(Variadic::from_iter(1..1000000)))?;
+    let f = lua.create_function(|_, ()| Result::Ok(Variadic::from_iter(1..1000000)))?;
     assert!(f.call::<_, Vec<u32>>(()).is_err());
     Ok(())
 }
@@ -1052,7 +1052,7 @@ fn test_large_args() -> Result<()> {
                 s += i;
                 assert_eq!(i, args[i]);
             }
-            Ok(s)
+            Result::Ok(s)
         })?,
     )?;
 
@@ -1082,7 +1082,7 @@ fn test_large_args_ref() -> Result<()> {
         for i in 0..args.len() {
             assert_eq!(args[i], i.to_string());
         }
-        Ok(())
+        Result::Ok(())
     })?;
 
     f.call::<_, ()>((0..100).map(|i| i.to_string()).collect::<Variadic<_>>())?;
@@ -1199,7 +1199,7 @@ fn test_load_from_function() -> Result<()> {
         i2.fetch_add(1, Ordering::Relaxed);
         let t = lua.create_table()?;
         t.set("__name", modname)?;
-        Ok(t)
+        Result::Ok(t)
     })?;
 
     let t: Table = lua.load_from_function("my_module", func.clone())?;
@@ -1209,7 +1209,7 @@ fn test_load_from_function() -> Result<()> {
     let _: Value = lua.load_from_function("my_module", func.clone())?;
     assert_eq!(i.load(Ordering::Relaxed), 1);
 
-    let func_nil = lua.create_function(move |_, _: String| Ok(Value::Nil))?;
+    let func_nil = lua.create_function(move |_, _: String| Result::Ok(Value::Nil))?;
     let v: Value = lua.load_from_function("my_module2", func_nil)?;
     assert_eq!(v, Value::Boolean(true));
 
@@ -1236,7 +1236,7 @@ fn test_inspect_stack() -> Result<()> {
         let source = debug.source().short_src;
         let source = source.as_deref().unwrap_or("?");
         let line = debug.curr_line();
-        Ok(format!("{}:{} {}", source, line, msg))
+        Result::Ok(format!("{}:{} {}", source, line, msg))
     })?;
     lua.globals().set("logline", logline)?;
 
@@ -1269,7 +1269,7 @@ fn test_multi_states() -> Result<()> {
         if let Some(g) = g {
             g.call(())?;
         }
-        Ok(())
+        Result::Ok(())
     })?;
     lua.globals().set("f", f)?;
 

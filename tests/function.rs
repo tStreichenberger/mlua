@@ -238,7 +238,7 @@ fn test_function_wrap() -> Result<()> {
     let lua = Lua::new();
 
     lua.globals()
-        .set("f", Function::wrap(|_, s: String| Ok(s)))?;
+        .set("f", Function::wrap(|_, s: String| Result::Ok(s)))?;
     lua.load(r#"assert(f("hello") == "hello")"#).exec().unwrap();
 
     let mut _i = false;

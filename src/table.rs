@@ -221,7 +221,7 @@ impl<'lua> Table<'lua> {
     /// table2.set(2, "value")?;
     ///
     /// let always_equals_mt = lua.create_table()?;
-    /// always_equals_mt.set("__eq", lua.create_function(|_, (_t1, _t2): (Table, Table)| Ok(true))?)?;
+    /// always_equals_mt.set("__eq", lua.create_function(|_, (_t1, _t2): (Table, Table)| Result::Ok(true))?)?;
     /// table2.set_metatable(Some(always_equals_mt));
     ///
     /// assert!(table1.equals(&table1.clone())?);
