@@ -3,6 +3,7 @@ use std::mem;
 use std::os::raw::{c_int, c_void};
 use std::ptr;
 use std::slice;
+use std::result::Result as StdResult;
 
 use crate::error::{Error, Result};
 use crate::lua::Lua;
@@ -549,11 +550,12 @@ pub(crate) struct WrappedAsyncFunction<'lua>(pub(crate) AsyncCallback<'lua, 'sta
 impl<'lua> Function<'lua> {
     /// Wraps a Rust function or closure, returning an opaque type that implements [`IntoLua`] trait.
     #[inline]
-    pub fn wrap<A, R, F>(func: F) -> impl IntoLua<'lua>
+    pub fn wrap<A, R, F, E>(func: F) -> impl IntoLua<'lua>
     where
         A: FromLuaMulti<'lua>,
         R: IntoLuaMulti<'lua>,
-        F: Fn(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
+        F: Fn(&'lua Lua, A) -> StdResult<R, E> + MaybeSend + 'static,
+        Error: From<E>,
     {
         WrappedFunction(Box::new(move |lua, nargs| unsafe {
             let args = A::from_stack_args(nargs, 1, None, lua)?;
@@ -563,11 +565,12 @@ impl<'lua> Function<'lua> {
 
     /// Wraps a Rust mutable closure, returning an opaque type that implements [`IntoLua`] trait.
     #[inline]
-    pub fn wrap_mut<A, R, F>(func: F) -> impl IntoLua<'lua>
+    pub fn wrap_mut<A, R, F, E>(func: F) -> impl IntoLua<'lua>
     where
         A: FromLuaMulti<'lua>,
         R: IntoLuaMulti<'lua>,
-        F: FnMut(&'lua Lua, A) -> Result<R> + MaybeSend + 'static,
+        F: FnMut(&'lua Lua, A) -> StdResult<R, E> + MaybeSend + 'static,
+        Error: From<E>,
     {
         let func = RefCell::new(func);
         WrappedFunction(Box::new(move |lua, nargs| unsafe {
@@ -582,12 +585,13 @@ impl<'lua> Function<'lua> {
     /// Wraps a Rust async function or closure, returning an opaque type that implements [`IntoLua`] trait.
     #[cfg(feature = "async")]
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
-    pub fn wrap_async<A, R, F, FR>(func: F) -> impl IntoLua<'lua>
+    pub fn wrap_async<A, R, F, FR, E>(func: F) -> impl IntoLua<'lua>
     where
         A: FromLuaMulti<'lua>,
         R: IntoLuaMulti<'lua>,
         F: Fn(&'lua Lua, A) -> FR + MaybeSend + 'static,
-        FR: Future<Output = Result<R>> + 'lua,
+        FR: Future<Output = StdResult<R, E>> + 'lua,
+        Error: From<E>,
     {
         WrappedAsyncFunction(Box::new(move |lua, args| unsafe {
             let args = match A::from_lua_args(args, 1, None, lua) {
